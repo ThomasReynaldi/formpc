@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Form-like Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .alert {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5 mb-4">Preventive & Correction by DRTRP</h1>
+    <form id="checkForm" method="post" action="{{ url_for('check_id') }}">
+        <div class="mb-3">
+            <label for="idbarang" class="form-label">Goods ID</label>
+            <input type="text" class="form-control" id="idbarang" name="idbarang" required placeholder="Fill The Code Of The Goods">
+        </div>
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <button class="btn btn-primary" type="submit" id="checkgoodsid">Check ID</button>
+        </div>
+        </form>        
+        <div class="mb-3" id="namaBarangContainer">
+            <label for="namaBarang" class="form-label">Product</label>
+            <input type="text" class="form-control" id="namaBarang" name="namaBarang" disabled placeholder="{{nama_barang}}">
+        </div>
+        <div class="mb-3">
+            <label for="choice">Choose The Action:</label>
+            <select id="choice" class="form-select" aria-label="Default select example" onchange="showOptions()">
+                <option selected disabled>What Action Want To Take</option>
+                <option value="prev">Preventive</option>
+                <option value="corr">Correction</option>
+            </select>
+        </div>
+        <!-- Options for Preventive -->
+        <div id="preventive-options" style="display: none">
+            <label for="temperature">Temperature :</label>
+            <br>
+            <label for="">Before</label>
+            <input type="file" class="form-control" id="tmbefore" name="tmbefore" required>
+            <br>
+            <label for="">After</label>
+            <input type="file" class="form-control" id="tmafter" name="tmafter" required>
+            <hr class="hr hr-bold" />
+            <label for="electrical">Electrical :</label>
+            <br>
+            <label for="electrical">Ampere</label>
+            <input type="number" class="form-control" id="ampere" name="ampere" required placeholder="Ampere">
+            <label for="electrical">Voltage</label>
+            <input type="number" class="form-control" id="voltage" name="voltage" required placeholder="Voltage">
+            <hr class="hr hr-bold" />
+            <label for="evaporator">Evaporator :</label>
+            <br>
+            <label for="">Before</label>
+            <input type="file" class="form-control" id="evbefore" name="evbefore" required>
+            <br>
+            <label for="">After</label>
+            <input type="file" class="form-control" id="evafter" name="evafter" required>
+            <hr class="hr hr-bold" />            
+            <label for="condensor">Condensor :</label>
+            
+            <label for="">Before</label>
+            <input type="file" class="form-control" id="cnbefore" name="cnbefore" required>
+            <br>
+            <label for="">After</label>
+            <input type="file" class="form-control" id="cnafter" name="cnafter" required>
+            <br>
+            
+            <!-- Tambahkan opsi Preventive lainnya di sini sesuai kebutuhan -->
+        </div>
+
+        <!-- Options for Correction -->
+        <div id="correction-options" style="display: none">
+            <label for="correction">Correction Options:</label>
+            <select id="correction" class="form-select" aria-label="Default select example">
+                <option value="option1">Option 1</option>
+                <option value="option2">Option 2</option>
+                <option value="option3">Option 3</option>
+            </select>
+        </div>
+    </form>
+    <div class="d-grid gap-2 col-6 mx-auto">
+        <button class="btn btn-primary" type="button" id="manualSubmit">Submit</button>
+    </div>
+</div>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script>
+    document.getElementById("idbarang").addEventListener("input", function () {
+        var goodsId = document.getElementById("idbarang").value;
+        if (goodsId.trim() !== "") {
+            document.getElementById("choice").disabled = false;
+        } else {
+            document.getElementById("choice").disabled = true;
+        }
+    });
+
+    document.getElementById("checkForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var form = this;
+        var formData = new FormData(form);
+
+        fetch(form.action, {
+            method: form.method,
+            body: formData,
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.status === "success") {
+                swal("Success!", "ID barang ada di database", "success");
+                showNamaBarang(data.nama_barang);
+                document.getElementById("idbarang").disabled = true;
+            } else {
+                showNamaBarang("Barang Tidak Di Temukan");
+                swal("Error!", "ID barang tidak ditemukan di database", "error");
+            }
+        })
+        .catch((error) => console.error("Error:", error));
+    });
+
+ document.getElementById("manualSubmit").addEventListener("click", function() {
+    var idBarangInput = document.getElementById("idbarang");
+    if (idBarangInput.disabled) {
+        // Lakukan tindakan yang sesuai jika idbarang sudah disabled
+        swal("Sukses!", "ID barang sudah diverifikasi", "success");
+    } else {
+        // Lakukan tindakan lain jika idbarang masih aktif
+        swal("Peringatan!", "Anda harus memeriksa ID barang terlebih dahulu", "warning");
+    }
+});
+
+
+    function showAlert(message, alertType) {
+        var alertDiv = document.createElement("div");
+        alertDiv.classList.add("alert", alertType);
+        alertDiv.textContent = message;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(function () {
+            alertDiv.remove();
+        }, 3000);
+    }
+
+    function showNamaBarang(namaBarang) {
+        var namaBarangInput = document.getElementById("namaBarang");
+        namaBarangInput.value = namaBarang;
+        namaBarangInput.disabled = true;
+        document.getElementById("namaBarangContainer").style.display = "block";
+    }
+
+    function showOptions() {
+        var choice = document.getElementById("choice").value;
+        var preventiveOptions = document.getElementById("preventive-options");
+        var correctionOptions = document.getElementById("correction-options");
+
+        if (choice === "prev") {
+            preventiveOptions.style.display = "block";
+            correctionOptions.style.display = "none";
+        } else if (choice === "corr") {
+            preventiveOptions.style.display = "none";
+            correctionOptions.style.display = "block";
+        } else {
+            preventiveOptions.style.display = "none";
+            correctionOptions.style.display = "none";
+        }
+    }
+</script>
+</body>
+</html>
